@@ -1,0 +1,51 @@
+version: '3.8'
+
+x-frontend-service: &frontend-service
+  extra_hosts:
+    - "host.docker.internal:host-gateway"
+
+services:
+  shell:
+    <<: *frontend-service
+    build:
+      context: .
+      args:
+        PROJECT: shell
+    ports:
+      - "4200:80"
+
+  mfe-clientes:
+    <<: *frontend-service
+    build:
+      context: .
+      args:
+        PROJECT: mfe-clientes
+    ports:
+      - "4201:80"
+
+  mfe-cuentas:
+    <<: *frontend-service
+    build:
+      context: .
+      args:
+        PROJECT: mfe-cuentas
+    ports:
+      - "4202:80"
+
+  mfe-movimientos:
+    <<: *frontend-service
+    build:
+      context: .
+      args:
+        PROJECT: mfe-movimientos
+    ports:
+      - "4203:80"
+
+  mfe-reportes:
+    <<: *frontend-service
+    build:
+      context: .
+      args:
+        PROJECT: mfe-reportes
+    ports:
+      - "4204:80"

@@ -1,0 +1,64 @@
+<div class="page-title">Reportes</div>
+
+<div class="error-toast" *ngIf="error">
+  {{ error }}
+  <button type="button" class="btn-secondary" style="margin-left: 1rem; padding: 0.25rem 0.5rem;" (click)="dismissError()">Cerrar</button>
+</div>
+
+<div class="toolbar" style="justify-content: flex-start; gap: 1rem; align-items: flex-end; flex-wrap: wrap;">
+  <div>
+    <label style="display: block; font-size: 0.8rem; margin-bottom: 0.25rem;">Fecha Inicio</label>
+    <input type="date" class="form-control" [(ngModel)]="fechaInicio">
+  </div>
+  <div>
+    <label style="display: block; font-size: 0.8rem; margin-bottom: 0.25rem;">Fecha Fin</label>
+    <input type="date" class="form-control" [(ngModel)]="fechaFin">
+  </div>
+  <div>
+    <label style="display: block; font-size: 0.8rem; margin-bottom: 0.25rem;">Cuenta</label>
+    <select class="form-control" [ngModel]="selectedAccountId ?? ''" (ngModelChange)="onAccountChange($event)">
+      <option value="">Todas las cuentas</option>
+      <option *ngFor="let account of accounts" [value]="account.id">{{ account.accountNumber }}</option>
+    </select>
+  </div>
+  <div>
+    <button class="btn-secondary" (click)="onSearch()" [disabled]="loading">Buscar</button>
+  </div>
+  <div style="flex: 1; text-align: right;">
+    <button class="btn-primary" (click)="generatePDF()" [disabled]="loading">Generar PDF</button>
+  </div>
+</div>
+
+<div class="loading-overlay" *ngIf="loading">Cargando reporte...</div>
+
+<div class="table-container" *ngIf="!loading || reportRows.length > 0">
+  <table>
+    <thead>
+      <tr>
+        <th>Fecha</th>
+        <th>Cliente</th>
+        <th>Numero Cuenta</th>
+        <th>Tipo</th>
+        <th>Saldo Cuenta</th>
+        <th>Estado</th>
+        <th>Movimiento</th>
+        <th>Saldo Disponible</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let m of reportRows">
+        <td>{{ m.createdAt | date:'dd/MM/yyyy' }}</td>
+        <td>{{ m.clientName }}</td>
+        <td>{{ m.accountNumber }}</td>
+        <td>{{ m.type }}</td>
+        <td>{{ m.balance | currency: m.currency }}</td>
+        <td>{{ m.status }}</td>
+        <td [style.color]="m.amount < 0 ? 'var(--error-color)' : 'green'">{{ m.amount | currency: m.currency }}</td>
+        <td>{{ m.availableBalance | currency: m.currency }}</td>
+      </tr>
+      <tr *ngIf="reportRows.length === 0 && !loading">
+        <td colspan="8" style="text-align: center;">No hay registros</td>
+      </tr>
+    </tbody>
+  </table>
+</div>

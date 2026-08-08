@@ -1,0 +1,108 @@
+<div class="page-title">Movimientos</div>
+
+<div class="error-toast" *ngIf="error">
+  {{ error }}
+  <button type="button" class="btn-secondary" style="margin-left: 1rem; padding: 0.25rem 0.5rem;" (click)="dismissError()">Cerrar</button>
+</div>
+
+<div class="toolbar" style="gap: 1rem;">
+  <select class="form-control search-box" [value]="selectedAccountId ?? ''" (change)="onAccountFilterChange($any($event.target).value)">
+    <option value="">Todas las cuentas (seleccione una)</option>
+    <option *ngFor="let account of accounts" [value]="account.id">
+      {{ account.accountNumber }} ({{ account.balance | currency: account.currency }})
+    </option>
+  </select>
+  <input type="text" #searchInput class="form-control search-box" placeholder="Buscar por cliente o cuenta..." (input)="onSearch(searchInput.value)">
+  <button class="btn-primary" (click)="openModal()" [disabled]="loading || accounts.length === 0">Nuevo</button>
+</div>
+
+<div class="loading-overlay" *ngIf="loading && transactions.length === 0">Cargando movimientos...</div>
+
+<div class="table-container" *ngIf="!loading || transactions.length > 0">
+  <table>
+    <thead>
+      <tr>
+        <th>Fecha</th>
+        <th>Cliente</th>
+        <th>Numero Cuenta</th>
+        <th>Tipo</th>
+        <th>Monto</th>
+        <th>Estado</th>
+        <th>Descripción</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let m of filteredTransactions">
+        <td>{{ m.createdAt | date:'dd/MM/yyyy HH:mm' }}</td>
+        <td>{{ m.clientName }}</td>
+        <td>{{ m.accountNumber }}</td>
+        <td>{{ m.type }}</td>
+        <td [style.color]="signedAmount(m) < 0 ? 'var(--error-color)' : 'green'">{{ signedAmount(m) | currency: m.currency }}</td>
+        <td>{{ m.status }}</td>
+        <td>{{ m.description }}</td>
+      </tr>
+      <tr *ngIf="filteredTransactions.length === 0 && !loading">
+        <td colspan="7" style="text-align: center;">No hay registros</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="modal-overlay" *ngIf="showModal">
+  <div class="modal-content">
+    <div class="modal-header">
+      Nuevo Movimiento
+      <button class="modal-close" (click)="closeModal()">&times;</button>
+    </div>
+
+    <form [formGroup]="movimientoForm" (ngSubmit)="onSubmit()">
+      <div class="form-group">
+        <label>Cuenta</label>
+        <select class="form-control" formControlName="accountId">
+          <option value="">Seleccione...</option>
+          <option *ngFor="let account of accounts" [value]="account.id">
+            {{ account.accountNumber }}
+          </option>
+        </select>
+        <span class="error-message" *ngIf="movimientoForm.get('accountId')?.invalid && movimientoForm.get('accountId')?.touched">
+          Requerido
+        </span>
+      </div>
+
+      <div class="form-group">
+        <label>Tipo (Depósito / Retiro)</label>
+        <select class="form-control" formControlName="type">
+          <option value="">Seleccione...</option>
+          <option value="DEPOSIT">Depósito</option>
+          <option value="WITHDRAWAL">Retiro</option>
+        </select>
+        <span class="error-message" *ngIf="movimientoForm.get('type')?.invalid && movimientoForm.get('type')?.touched">
+          Requerido
+        </span>
+      </div>
+
+      <div class="form-group">
+        <label>Valor</label>
+        <input type="number" class="form-control" formControlName="amount" step="0.01" min="0.01">
+        <span class="error-message" *ngIf="movimientoForm.get('amount')?.invalid && movimientoForm.get('amount')?.touched">
+          Monto inválido
+        </span>
+      </div>
+
+      <div class="form-group">
+        <label>Moneda</label>
+        <input type="text" class="form-control" formControlName="currency" maxlength="3">
+      </div>
+
+      <div class="form-group">
+        <label>Descripción</label>
+        <input type="text" class="form-control" formControlName="description">
+      </div>
+
+      <div class="modal-actions">
+        <button type="button" class="btn-secondary" (click)="closeModal()">Cancelar</button>
+        <button type="submit" class="btn-primary">Guardar</button>
+      </div>
+    </form>
+  </div>
+</div>

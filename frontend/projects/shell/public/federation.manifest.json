@@ -1,0 +1,6 @@
+{
+	"mfe-clientes": "http://localhost:4201/remoteEntry.json",
+	"mfe-cuentas": "http://localhost:4202/remoteEntry.json",
+	"mfe-movimientos": "http://localhost:4203/remoteEntry.json",
+	"mfe-reportes": "http://localhost:4204/remoteEntry.json"
+}

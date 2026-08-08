@@ -1,0 +1,152 @@
+version: "3.8"
+
+services:
+  client-postgres:
+    image: postgres:15-alpine
+    container_name: client-postgres
+    environment:
+      POSTGRES_DB: clientdb
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres123
+      PGDATA: /var/lib/postgresql/data/pgdata
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_client_data:/var/lib/postgresql/data
+    networks:
+      - microservices-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  account-postgres:
+    image: postgres:15-alpine
+    container_name: account-postgres
+    environment:
+      POSTGRES_DB: accountdb
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres123
+      PGDATA: /var/lib/postgresql/data/pgdata
+    ports:
+      - "5436:5432"
+    volumes:
+      - postgres_account_data:/var/lib/postgresql/data
+    networks:
+      - microservices-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  client-service:
+    build:
+      context: ./msa-clients/
+      dockerfile: Dockerfile
+    container_name: client-service
+    environment:
+      SPRING_PROFILE: prod
+      DB_URL: jdbc:postgresql://client-postgres:5432/clientdb
+      DB_USERNAME: postgres
+      DB_PASSWORD: postgres123
+      SERVER_PORT: 8080
+    ports:
+      - "8081:8080"
+    depends_on:
+      client-postgres:
+        condition: service_healthy
+    networks:
+      - microservices-network
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "wget",
+          "--no-verbose",
+          "--tries=1",
+          "--spider",
+          "http://localhost:8080/actuator/health",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    restart: unless-stopped
+
+  account-service:
+    build:
+      context: ./msa-accounts/
+      dockerfile: Dockerfile
+    container_name: account-service
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      DB_URL: jdbc:postgresql://account-postgres:5432/accountdb
+      DB_USERNAME: postgres
+      DB_PASSWORD: postgres123
+      CLIENT_SERVICE_URL: http://client-service:8080
+      SERVER_PORT: 8080
+    ports:
+      - "8082:8080"
+    depends_on:
+      account-postgres:
+        condition: service_healthy
+      client-service:
+        condition: service_healthy
+    networks:
+      - microservices-network
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "wget",
+          "--no-verbose",
+          "--tries=1",
+          "--spider",
+          "http://localhost:8080/actuator/health",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    restart: unless-stopped
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+    networks:
+      - microservices-network
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+    volumes:
+      - grafana_data:/var/lib/grafana
+    networks:
+      - microservices-network
+    depends_on:
+      - prometheus
+
+volumes:
+  postgres_client_data:
+  postgres_account_data:
+  prometheus_data:
+  grafana_data:
+
+networks:
+  microservices-network:
+    driver: bridge

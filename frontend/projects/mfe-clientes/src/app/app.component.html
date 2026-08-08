@@ -1,0 +1,119 @@
+<div class="page-title">Clientes</div>
+
+<div class="error-toast" *ngIf="error">
+  {{ error }}
+  <button type="button" class="btn-secondary" style="margin-left: 1rem; padding: 0.25rem 0.5rem;" (click)="dismissError()">Cerrar</button>
+</div>
+
+<div class="toolbar">
+  <input type="text" #searchInput class="form-control search-box" placeholder="Buscar cliente..." (input)="onSearch(searchInput.value)">
+  <button class="btn-primary" (click)="openModal()" [disabled]="loading">Nuevo</button>
+</div>
+
+<div class="loading-overlay" *ngIf="loading && clients.length === 0">Cargando clientes...</div>
+
+<div class="table-container" *ngIf="!loading || clients.length > 0">
+  <table>
+    <thead>
+      <tr>
+        <th>Nombre</th>
+        <th>Identificación</th>
+        <th>Edad</th>
+        <th>Género</th>
+        <th>Dirección</th>
+        <th>Teléfono</th>
+        <th>Estado</th>
+        <th>Acciones</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let client of filteredClients">
+        <td>{{ client.name }}</td>
+        <td>{{ client.identification }}</td>
+        <td>{{ client.age }}</td>
+        <td>{{ client.genre }}</td>
+        <td>{{ client.address }}</td>
+        <td>{{ client.phone }}</td>
+        <td>{{ client.status }}</td>
+        <td>
+          <button class="btn-secondary" style="margin-right: 0.5rem; padding: 0.25rem 0.75rem;" (click)="openModal(client)">Editar</button>
+          <button class="btn-danger" style="padding: 0.25rem 0.75rem;" (click)="deleteClient(client.clientId)">Eliminar</button>
+        </td>
+      </tr>
+      <tr *ngIf="filteredClients.length === 0 && !loading">
+        <td colspan="8" style="text-align: center;">No hay registros</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="modal-overlay" *ngIf="showModal">
+  <div class="modal-content">
+    <div class="modal-header">
+      {{ isEditing ? 'Editar Cliente' : 'Nuevo Cliente' }}
+      <button class="modal-close" (click)="closeModal()">&times;</button>
+    </div>
+
+    <form [formGroup]="clienteForm" (ngSubmit)="onSubmit()">
+      <div class="form-group">
+        <label>Nombre</label>
+        <input type="text" class="form-control" formControlName="name">
+        <span class="error-message" *ngIf="clienteForm.get('name')?.invalid && clienteForm.get('name')?.touched">
+          Nombre es requerido
+        </span>
+      </div>
+
+      <div class="form-group">
+        <label>Identificación</label>
+        <input type="text" class="form-control" formControlName="identification">
+        <span class="error-message" *ngIf="clienteForm.get('identification')?.invalid && clienteForm.get('identification')?.touched">
+          Identificación es requerida
+        </span>
+      </div>
+
+      <div style="display: flex; gap: 1rem;">
+        <div class="form-group" style="flex: 1;">
+          <label>Fecha de nacimiento</label>
+          <input type="date" class="form-control" formControlName="birthDate">
+          <span class="error-message" *ngIf="clienteForm.get('birthDate')?.invalid && clienteForm.get('birthDate')?.touched">
+            Fecha requerida
+          </span>
+        </div>
+        <div class="form-group" style="flex: 1;">
+          <label>Género</label>
+          <select class="form-control" formControlName="genre">
+            <option value="">Seleccione...</option>
+            <option value="M">Masculino</option>
+            <option value="F">Femenino</option>
+          </select>
+          <span class="error-message" *ngIf="clienteForm.get('genre')?.invalid && clienteForm.get('genre')?.touched">
+            Requerido
+          </span>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Dirección</label>
+        <input type="text" class="form-control" formControlName="address">
+      </div>
+
+      <div class="form-group">
+        <label>Teléfono</label>
+        <input type="text" class="form-control" formControlName="phone">
+      </div>
+
+      <div class="form-group">
+        <label>Estado</label>
+        <select class="form-control" formControlName="status">
+          <option value="ACTIVE">Activo</option>
+          <option value="INACTIVE">Inactivo</option>
+        </select>
+      </div>
+
+      <div class="modal-actions">
+        <button type="button" class="btn-secondary" (click)="closeModal()">Cancelar</button>
+        <button type="submit" class="btn-primary">Guardar</button>
+      </div>
+    </form>
+  </div>
+</div>
