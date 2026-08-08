@@ -1,0 +1,20 @@
+<div class="app-layout">
+  <header class="app-header">
+    <div class="logo">BANCO</div>
+  </header>
+  <div class="app-body">
+    <aside class="app-sidebar">
+      <nav>
+        <ul>
+          <li><a routerLink="/clientes" routerLinkActive="active">Clientes</a></li>
+          <li><a routerLink="/cuentas" routerLinkActive="active">Cuentas</a></li>
+          <li><a routerLink="/movimientos" routerLinkActive="active">Movimientos</a></li>
+          <li><a routerLink="/reportes" routerLinkActive="active">Reportes</a></li>
+        </ul>
+      </nav>
+    </aside>
+    <main class="app-content">
+      <router-outlet></router-outlet>
+    </main>
+  </div>
+</div>
